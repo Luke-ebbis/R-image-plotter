@@ -4,11 +4,14 @@ if (!require("shinyjs")) install.packages("shinyjs")
 
 library(shiny)
 library(shinyjs)
+library(shinyWidgets)
 library(tidyverse)
 library(magick)
 library(gridExtra)
 library(ggplot2)
 library(ggtext)
+
+
 
 # functions
 make_pdf <- function(map,
@@ -25,7 +28,7 @@ make_pdf <- function(map,
                               name_pattern = name_pattern,
                               comment_table = comment_table,
                               extension = extension,
-                              pattern_remove = "(\\s\\(Klein\\))",
+                              pattern_remove = pattern_remove,
                               map = map)
   output_file <- write_picture_list(pictures, 
                                     output_dir = output_dir,
@@ -173,15 +176,26 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
+      textInput("remove_pattern", label = "What pattern should be removed?",
+                value = "(\\s\\(Klein\\))"),
+      textInput("name_pattern", 
+                label = "What pattern is the same between all files?",
+                value = "P1070(.+)."),
+      textInput("file_extension", label = "What file type are you using?",
+                value = ".JPG"),
       fileInput("zipFile", "Choose a zip file with images", accept = c(".zip")),
       actionButton("processBtn", "Process Zip File"),
+      useShinyjs(),
+      div(id="dwnbutton", 
+          downloadButton("downloadData", "Download", 
+                         onclick = "Shiny.setInputValue('dwnClicked',
+                         true, {priority:'event'});")
+      ),
     ),
     
     mainPanel(
-      conditionalPanel(
-        condition = "output.downloadlinkvisible == 'done'",
-          downloadLink("downloadData", "Download Data")
-      ),
+      
+      
       textOutput("result"),
       uiOutput("pdfviewer")
     )
@@ -189,7 +203,8 @@ ui <- fluidPage(
 )
 
 # Define server
-server <- function(input, output) {
+server <- function(input, output, session) {
+  file.remove("www/app.pdf")
   rv <- reactiveValues(messages = NULL,
                        output_file = NULL)
   
@@ -202,7 +217,10 @@ server <- function(input, output) {
     
     # Print the list of extracted files for debugging
     print(files)
-    outfile <- make_pdf("workingdir", output_dir = "./www/")
+    outfile <- make_pdf("workingdir", output_dir = "./www/",
+                        extension = input$file_extension,
+                        name_pattern = input$name_pattern,
+                        pattern_remove = input$remove_pattern)
 
     
     # Clean up: remove the temporary directory and its contents
@@ -226,9 +244,6 @@ server <- function(input, output) {
     # Display the result (you can customize this based on your actual output)
     output$result <- renderText({
       paste("Processed result:", result)
-    })
-    output$downloadlinkVisible <- reactive({
-      "done"
     })
   })
   
@@ -263,6 +278,20 @@ server <- function(input, output) {
       file.copy("www/app.pdf", file)
     }
   )
+  
+  observeEvent(input[["dwnClicked"]], {
+    if(file.exists("www/app.pdf")){
+      message("the file exist, allowing download!")
+    }else{
+      sendSweetAlert(
+        session = session,
+        title = "No data !",
+        text = "No data available \n Upload data first,
+        and press the process zip file button!",
+        type = "error"
+      )
+    }
+  })
 }
 # Run the Shiny app
 shinyApp(ui, server)
