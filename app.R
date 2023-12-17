@@ -4,6 +4,11 @@ if (!require("shinyjs")) install.packages("shinyjs")
 
 library(shiny)
 library(shinyjs)
+library(tidyverse)
+library(magick)
+library(gridExtra)
+library(ggplot2)
+library(ggtext)
 
 # functions
 make_pdf <- function(map,
@@ -11,7 +16,8 @@ make_pdf <- function(map,
                      name_pattern = "P1070(.+).JPG",
                      pattern_remove = "(\\s\\(Klein\\))",
                      extension = ".JPG",
-                     dims = c(4, 2)) {
+                     dims = c(4, 2),
+                     output_name = "app") {
   fotoVtr <- list.files(map,
                         pattern = extension)
   comment_table  <- retrieve_comment_table(map)
@@ -19,8 +25,14 @@ make_pdf <- function(map,
                               name_pattern = name_pattern,
                               comment_table = comment_table,
                               extension = extension,
-                              pattern_remove = "(\\s\\(Klein\\))")
-  write_picture_list(pictures, output_dir, dims = dims)
+                              pattern_remove = "(\\s\\(Klein\\))",
+                              map = map)
+  output_file <- write_picture_list(pictures, 
+                                    output_dir = output_dir,
+                                    dims = dims, 
+                     output.name = output_name)
+  return(output_file)
+  
 }
 
 retrieve_comment_table <- function(map) {
@@ -70,7 +82,8 @@ make_image_list <- function(fotoVtr,
                             name_pattern = "P1070(.+)",
                             comment_table = NA,
                             pattern_remove = "(\\s\\(Klein\\))",
-                            extension = ".JPG") {
+                            extension = ".JPG",
+                            map = map) {
   p <- list()
   message(paste("There are ", length(fotoVtr), " images to process"))
   if (is.data.frame(comment_table)) {
@@ -102,12 +115,14 @@ make_image_list <- function(fotoVtr,
     caption_string <- build_caption(image_name, comment_string)
     message(paste("Processing picture ", image_file_name, "\n\t new name: ",
                   image_name, "\n\t caption:", caption_string))
-    p[[image_file_name]] <- build_image(image_file_name, caption_string)
+    p[[image_file_name]] <- build_image(image_file_name, caption_string,
+                                        map)
   }
   p
 }
 
-build_image <- function(image_file_name, caption_string) {
+build_image <- function(image_file_name, caption_string,
+                        map) {
   require(ggtext)
   fotofile <- paste0(map, "/", image_file_name)
   foto <- image_read(fotofile)
@@ -123,9 +138,9 @@ build_image <- function(image_file_name, caption_string) {
 
 build_caption <- function(image_name, image_caption) {
   if (!identical(image_caption, character(0))) {
-    cap <-paste0("**","Foto: ", image_name,
-                 "**", "</b><br>", image_caption, 
-                 collapse = " ")  
+    cap <- paste0("**","Foto: ", image_name,
+                  "**", "</b><br>", image_caption, 
+                  collapse = " ")  
   } else {
     cap <- paste0("**","Foto: ", image_name,
                   "**", collapse = " ")  
@@ -160,49 +175,43 @@ ui <- fluidPage(
     sidebarPanel(
       fileInput("zipFile", "Choose a zip file with images", accept = c(".zip")),
       actionButton("processBtn", "Process Zip File"),
-      downloadButton("downloadBtn", "Download PDF")
     ),
     
     mainPanel(
-      # Output for displaying messages or additional information
-      verbatimTextOutput("message"),
-      # Output for displaying the processed results (if any)
-      # You can customize this based on your actual output
-      textOutput("result")
+      conditionalPanel(
+        condition = "output.downloadlinkvisible == 'done'",
+          downloadLink("downloadData", "Download Data")
+      ),
+      textOutput("result"),
+      uiOutput("pdfviewer")
     )
   )
 )
 
 # Define server
 server <- function(input, output) {
-  rv <- reactiveValues(messages = NULL)
+  rv <- reactiveValues(messages = NULL,
+                       output_file = NULL)
   
   # Function to process the uploaded zip file
   processZipFile <- function(zipFilePath) {
-    # Create a temporary directory
-    tempDir <- tempdir()
     
-    # Print the zip file path for debugging
-    
-    rv$messages <- c(rv$messages, paste("Processing zip file:", zipFilePath))
-    
+    dir.create("www")
     # Unzip the contents of the zip file into the temporary directory
-    files <- unzip(zipFilePath, exdir = tempDir)
+    files <- unzip(zipFilePath, exdir = "workingdir")
     
     # Print the list of extracted files for debugging
     print(files)
-    rv$messages <- c(rv$messages, "Extracted files:")
-    rv$messages <- c(rv$messages, files)
-    
-    # ... rest of your processing logic
+    outfile <- make_pdf("workingdir", output_dir = "./www/")
+
     
     # Clean up: remove the temporary directory and its contents
-    unlink(tempDir, recursive = TRUE)
-    
-    result <- "done"
+    unlink(zipFilePath, recursive = TRUE)
+    rv$output_file <- outfile
+    result <- outfile
     
     # Print messages directly to verbatimTextOutput
-    cat("Process completed. Result:", result, "\n")
+    message(paste("Process completed. Result:", rv$output_file, "\n"))
     
     return(result)
   }
@@ -218,6 +227,9 @@ server <- function(input, output) {
     output$result <- renderText({
       paste("Processed result:", result)
     })
+    output$downloadlinkVisible <- reactive({
+      "done"
+    })
   })
   
   output$message <- renderPrint({
@@ -228,18 +240,29 @@ server <- function(input, output) {
   # Event handler for the "Download PDF" button
   observeEvent(input$downloadBtn, {
     # Generate PDF and save it (replace this with your actual PDF generation code)
-    outfile <- make_pdf("figures")
+    
+    
     
     # Trigger download of the generated PDF
     downloadHandler(
       filename = function() {
-        outfile
-      },
+        "output.pdf"
+        },
       content = function(file) {
-        file.copy(outfile, file)
+        message(paste("the output exist ", 
+                      file.exists("www/app.pdf")))
+        file.copy("www/app.pdf", file)
       }
     )
   })
+  
+  
+  output$downloadData <- downloadHandler(
+    filename = "app.pdf",
+    content = function(file) {
+      file.copy("www/app.pdf", file)
+    }
+  )
 }
 # Run the Shiny app
 shinyApp(ui, server)
