@@ -14,22 +14,24 @@ library(ggtext)
 
 
 # functions
-make_pdf <- function(map,
+make_pdf <- function(Folder,
                      output_dir = "./",
                      name_pattern = "P1070(.+).JPG",
                      pattern_remove = "(\\s\\(Klein\\))",
                      extension = ".JPG",
                      dims = c(4, 2),
                      output_name = "app") {
-  fotoVtr <- list.files(map,
+  print("making pdf")
+  print(Folder)
+  fotoVtr <- list.files(Folder,
                         pattern = extension)
-  comment_table  <- retrieve_comment_table(map)
+  comment_table  <- retrieve_comment_table(Folder)
   pictures <- make_image_list(fotoVtr, 
                               name_pattern = name_pattern,
                               comment_table = comment_table,
                               extension = extension,
                               pattern_remove = pattern_remove,
-                              map = map)
+                              Folder = Folder)
   output_file <- write_picture_list(pictures, 
                                     output_dir = output_dir,
                                     dims = dims, 
@@ -38,8 +40,9 @@ make_pdf <- function(map,
   
 }
 
-retrieve_comment_table <- function(map) {
-  comment_file <- list.files(map, pattern = ".csv")
+retrieve_comment_table <- function(Folder) {
+  print(list.files(Folder, pattern = "*.tsv"))
+  comment_file <- list.files(Folder, pattern = "*.tsv")
   if (comment_file == "") {
     warning("No comment file has been supplied! Please place a comment file with",
          " two columns, name (file name without the pattern that should be",
@@ -49,12 +52,15 @@ retrieve_comment_table <- function(map) {
     warning(paste("Only one comment file allowed, the programme detected:", 
                paste(comment_file)))
   }
-  comment_table <- read.csv(paste0(map, "/", comment_file), sep = ',')
+  comment_table_file <- paste0(Folder, "/", comment_file)
+  print("reading table")
+  print(comment_table_file)
+  comment_table <- read.delim(comment_table_file, sep = '\t')
   if (!(all(colnames(comment_table) %in% c("name", "description")))) {
     warning("The description table has the wrong column names, the names",
          " `name` and `description` are expected.")
   }
-  comment_table
+  print(comment_table)
 }
 
 write_picture_list <- function(picture_list,
@@ -86,11 +92,12 @@ make_image_list <- function(fotoVtr,
                             comment_table = NA,
                             pattern_remove = "(\\s\\(Klein\\))",
                             extension = ".JPG",
-                            map = map) {
+                            Folder = Folder) {
   p <- list()
   message(paste("There are ", length(fotoVtr), " images to process"))
   if (is.data.frame(comment_table)) {
     message("Also adding comments.")
+    print(tibble(comment_table))
   }
   message("\n=====")
   
@@ -101,10 +108,11 @@ make_image_list <- function(fotoVtr,
                                      extension = extension)
     if (is.data.frame(comment_table)) {
       # there is a comment to be read
-      search_name <- str_remove(image_file_name,
-                                pattern_remove) |> str_remove(extension)
+      print(stringr::str_glue("image file name {image_file_name}\n  makes {image_name}"))
+      search_name <- image_name
       comment_row <- comment_table |>
-        filter(name == search_name)
+        mutate(name = as.character(name)) |> 
+        filter(stringr::str_detect(name, search_name))
       if (length(comment_row$name) > 1) {
         warning("Invalid comment data. Please specify only one comment per file.\n",
              "found comment data ", comment_row)
@@ -119,15 +127,15 @@ make_image_list <- function(fotoVtr,
     message(paste("Processing picture ", image_file_name, "\n\t new name: ",
                   image_name, "\n\t caption:", caption_string))
     p[[image_file_name]] <- build_image(image_file_name, caption_string,
-                                        map)
+                                        Folder)
   }
   p
 }
 
 build_image <- function(image_file_name, caption_string,
-                        map) {
+                        Folder) {
   require(ggtext)
-  fotofile <- paste0(map, "/", image_file_name)
+  fotofile <- paste0(Folder, "/", image_file_name)
   foto <- image_read(fotofile)
   image_ggplot(foto, interpolate = FALSE) + 
     labs(caption = caption_string) +
@@ -154,19 +162,21 @@ build_caption <- function(image_name, image_caption) {
 image_display_name <- function(image_name, pattern_remove = NA,
                                name_pattern = "P1070(.+).JPG",
                                extension = ".JPG") {
-  
-  # Removing the additional junk from the names.
+  print(stringr::str_glue("name: {image_name}"))
+  # Removing the additional junk from the names
   if (!is.na(pattern_remove)) {
     image_name <- str_remove(image_name, pattern_remove)  
   }
   image_name <- str_extract(image_name, name_pattern, group=1)
+  print(stringr::str_glue("name2: {image_name}"))
   image_name <- str_remove(image_name, extension)
+  print(stringr::str_glue("name3: {image_name}"))
   image_name
 }
 
 
 
-your_processing_function <- function(map) {
+your_processing_function <- function(Folder) {
   
 }
 
@@ -217,6 +227,7 @@ server <- function(input, output, session) {
     files <- unzip(zipFilePath, exdir = "workingdir")
     
     # Print the list of extracted files for debugging
+    print("files are")
     print(files)
     outfile <- make_pdf("workingdir", output_dir = "./www/",
                         extension = input$file_extension,
@@ -244,7 +255,7 @@ server <- function(input, output, session) {
     
     # Display the result (you can customize this based on your actual output)
     output$result <- renderText({
-      paste("Processed result:", result)
+      paste("COMPLETED: Processed result:", result)
     })
   })
   
