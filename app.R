@@ -41,17 +41,17 @@ make_pdf <- function(map,
 retrieve_comment_table <- function(map) {
   comment_file <- list.files(map, pattern = ".csv")
   if (comment_file == "") {
-    stop("No comment file has been supplied! Please place a comment file with",
+    warning("No comment file has been supplied! Please place a comment file with",
          " two columns, name (file name without the pattern that should be",
          " removed) and the description of the image.")
   }
   if (length(comment_file) > 1)  {
-    stop(paste("Only one comment file allowed, the programme detected:", 
+    warning(paste("Only one comment file allowed, the programme detected:", 
                paste(comment_file)))
   }
   comment_table <- read.csv(paste0(map, "/", comment_file), sep = ',')
   if (!(all(colnames(comment_table) %in% c("name", "description")))) {
-    stop("The description table has the wrong column names, the names",
+    warning("The description table has the wrong column names, the names",
          " `name` and `description` are expected.")
   }
   comment_table
@@ -106,7 +106,7 @@ make_image_list <- function(fotoVtr,
       comment_row <- comment_table |>
         filter(name == search_name)
       if (length(comment_row$name) > 1) {
-        stop("Invalid comment data. Please specify only one comment per file.\n",
+        warning("Invalid comment data. Please specify only one comment per file.\n",
              "found comment data ", comment_row)
       }
       comment_string <- comment_row$description |> 
@@ -194,10 +194,9 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      
+      includeMarkdown("README.md"),
       
       textOutput("result"),
-      uiOutput("pdfviewer")
     )
   )
 )
@@ -205,6 +204,8 @@ ui <- fluidPage(
 # Define server
 server <- function(input, output, session) {
   file.remove("www/app.pdf")
+  unlink("workingdir/*")
+  unlink("workingdir/figures")
   rv <- reactiveValues(messages = NULL,
                        output_file = NULL)
   
