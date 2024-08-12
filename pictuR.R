@@ -18,6 +18,7 @@ make_pdf <- function(map,
                      pattern_remove = "(\\s\\(Klein\\))",
                      extension = ".JPG",
                      dims = c(4, 2)) {
+  print("making pdfs")
   fotoVtr <- list.files(map,
                         pattern = extension)
   comment_table  <- retrieve_comment_table(map)
@@ -31,6 +32,7 @@ make_pdf <- function(map,
 
 retrieve_comment_table <- function(map) {
   comment_file <- list.files(map, pattern = ".csv")
+  print(comment_file, map)
   if (comment_file == "") {
     stop("No comment file has been supplied! Please place a comment file with",
          " two columns, name (file name without the pattern that should be",
