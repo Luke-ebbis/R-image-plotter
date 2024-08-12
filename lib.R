@@ -1,6 +1,12 @@
+library(tidyverse)
+library(magick)
+library(gridExtra)
+library(ggplot2)
+library(ggtext)
+
 make_pdf <- function(Folder,
                      output_dir = "./",
-                     name_pattern = "P1070(.+).JPG",
+                     name_pattern = "P\\d{4}(.+).JPG",
                      pattern_remove = "(\\s\\(Klein\\))",
                      extension = ".JPG",
                      dims = c(4, 2),

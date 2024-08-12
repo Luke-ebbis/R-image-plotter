@@ -53,4 +53,6 @@ app.pdf
 www/
 workingdir/
 test
-project.Rproj
+project.Rproj# pixi environments
+.pixi
+*.egg-info

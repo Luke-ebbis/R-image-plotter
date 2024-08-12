@@ -1,15 +1,7 @@
-# Install and load required packages
-if (!require("shiny")) install.packages("shiny")
-if (!require("shinyjs")) install.packages("shinyjs")
 
 library(shiny)
 library(shinyjs)
 library(shinyWidgets)
-library(tidyverse)
-library(magick)
-library(gridExtra)
-library(ggplot2)
-library(ggtext)
 
 
 

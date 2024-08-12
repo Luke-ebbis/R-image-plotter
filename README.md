@@ -1,5 +1,13 @@
 # The `pictuR` programme
 
+## Installation
+
+```
+pixi run pictuR    
+```
+
+## Usage
+
 The `pictuR` programme plots an pdf with images and allows for the optional creation of a description from a `tsv` file. If you want a description, put a `tsv` file in the zip that has a name and a description colunm. Example of the zip:
 ```
 figures.zip/
