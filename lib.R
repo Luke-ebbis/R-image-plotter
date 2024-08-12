@@ -149,18 +149,17 @@ build_caption <- function(image_name, image_caption) {
   cap
 }
 
-image_display_name <- function(image_name, pattern_remove = NA,
-                               name_pattern = "P1070(.+).JPG",
-                               extension = ".JPG") {
-  print(stringr::str_glue("name: {image_name}"))
+image_display_name <- function(image_name, 
+                               pattern_remove = NA,
+                               name_pattern = "P\\d{4}(.+)\\s(\\(Klein\\)).JPG",
+                               extension = "\\.JPG") {
+  
   # Removing the additional junk from the names
   if (!is.na(pattern_remove)) {
     image_name <- str_remove(image_name, pattern_remove)  
   }
   image_name <- str_extract(image_name, name_pattern, group=1)
-  print(stringr::str_glue("name2: {image_name}"))
   image_name <- str_remove(image_name, extension)
-  print(stringr::str_glue("name3: {image_name}"))
   image_name
 }
 
