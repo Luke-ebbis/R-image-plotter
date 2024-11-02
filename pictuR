@@ -1,0 +1,3 @@
+#!/bin/bash
+Rscript "$CONDA_PREFIX/bin/Rscript" "$(dirname "$0")/pictuR.R" "$@"
+

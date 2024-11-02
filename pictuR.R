@@ -13,9 +13,8 @@ main <- function() {
                       help="Path to the zip")
   parser$add_argument("output", type="character",
                       help="Path the output PDF")
-  
-  
-  parser$add_argument("-e", "--extention", type="character",
+
+  parser$add_argument("-e", "--extension", type="character",
                       default=".JPG",
                       help="Type of the extension of the images in the zip.")
   parser$add_argument("-p", "--pictureName", type="character",
@@ -25,8 +24,8 @@ main <- function() {
                       default="\\s(\\(Klein\\))",
                       help="Second recurrent pattern to remove")
   args <- parser$parse_args()
-  
-  make_pdf(args$folder, 
+
+  make_pdf(args$folder,
            output_dir = args$output,
            extension = args$extention,
            name_pattern = args$pictureName,

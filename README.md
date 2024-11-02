@@ -3,7 +3,7 @@
 ## Installation
 
 ```
-pixi run pictuR    
+pixi global install pictur -c conda-forge -c sibbe -c r
 ```
 
 ## Usage

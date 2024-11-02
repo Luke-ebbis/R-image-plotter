@@ -1,0 +1,45 @@
+package:
+  name: pictur # Name of your package
+  version: "0.1.0"  # Version of your package
+
+build:
+  script: |
+    echo $PWD
+    mkdir -p $PREFIX/bin
+    cp pictuR $PREFIX/bin/
+    cp pictuR.bat $PREFIX/bin/
+
+extra:
+  channels:
+    - conda-forge
+
+source:
+  path: . # Path to your R script
+
+requirements:
+  build:
+    - r-base  # Minimum R version (e.g., r-base >=4.1.0)
+    - r-cli
+    - shiny
+    - r-ggtext
+    - r-ggplot2
+    - r-gridextra
+    - r-tidyverse
+    - r-argparse
+    - r-magick
+
+  run:
+    - r-base  # Minimum R version (e.g., r-base >=4.1.0)
+    - r-cli
+    - shiny
+    - r-ggtext
+    - r-ggplot2
+    - r-gridextra
+    - r-tidyverse
+    - r-argparse
+    - r-magick
+
+about:
+  # home: https://github.com/yourusername/your_package  # Your project’s home page (optional)
+  summary: "Takes in zip files and produces PDF files with pictures."
+  license: "MIT"  # License type
