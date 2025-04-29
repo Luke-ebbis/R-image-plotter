@@ -15,10 +15,10 @@ main <- function() {
                       help="Path the output PDF")
 
   parser$add_argument("-e", "--extension", type="character",
-                      default=".JPG",
+                      default="\\.JPG",
                       help="Type of the extension of the images in the zip.")
   parser$add_argument("-p", "--pictureName", type="character",
-                      default="P\\d{4}(.+).JPG",
+                      default="P\\d{4}(.+)\\.JPG",
                       help="First")
   parser$add_argument("-r", "--remove", type="character",
                       default="\\s(\\(Klein\\))",
@@ -27,7 +27,7 @@ main <- function() {
 
   make_pdf(args$folder,
            output_dir = args$output,
-           extension = args$extention,
+           extension = args$extension,
            name_pattern = args$pictureName,
            pattern_remove = args$remove)
 }

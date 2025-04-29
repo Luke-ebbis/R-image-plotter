@@ -8,13 +8,12 @@ make_pdf <- function(Folder,
                      output_dir = "./",
                      name_pattern = "P\\d{4}(.+).JPG",
                      pattern_remove = "(\\s\\(Klein\\))",
-                     extension = ".JPG",
+                     extension = "\\.JPG",
                      dims = c(4, 2),
                      output_name = "app") {
-  print("making pdf")
-  print(Folder)
   fotoVtr <- list.files(Folder,
                         pattern = extension)
+  print(fotoVtr)
   comment_table  <- retrieve_comment_table(Folder)
   pictures <- make_image_list(fotoVtr, 
                               name_pattern = name_pattern,
@@ -31,10 +30,10 @@ make_pdf <- function(Folder,
 }
 
 retrieve_comment_table <- function(Folder) {
-  print(list.files(Folder, pattern = "*.tsv"))
+  message(str_glue("entering {Folder}"))
   comment_file <- list.files(Folder, pattern = "*.tsv")
-  if (comment_file == "") {
-    warning("No comment file has been supplied! Please place a comment file with",
+  if (comment_file == "" || length(comment_file) == 0) {
+    stop("No comment file has been supplied! Please place a comment file with",
             " two columns, name (file name without the pattern that should be",
             " removed) and the description of the image.")
   }
@@ -81,7 +80,7 @@ make_image_list <- function(fotoVtr,
                             name_pattern = "P1070(.+)",
                             comment_table = NA,
                             pattern_remove = "(\\s\\(Klein\\))",
-                            extension = ".JPG",
+                            extension = "\\.JPG",
                             Folder = Folder) {
   p <- list()
   message(paste("There are ", length(fotoVtr), " images to process"))
@@ -90,7 +89,6 @@ make_image_list <- function(fotoVtr,
     print(tibble(comment_table))
   }
   message("\n=====")
-  
   for(image_file_name in fotoVtr){
     image_name <- image_display_name(image_file_name, 
                                      name_pattern = name_pattern,
@@ -151,10 +149,11 @@ build_caption <- function(image_name, image_caption) {
 
 image_display_name <- function(image_name, 
                                pattern_remove = NA,
-                               name_pattern = "P\\d{4}(.+)\\s(\\(Klein\\)).JPG",
+                               name_pattern = "P\\d{4}(.+)\\s(\\(Klein\\))\\.JPG",
                                extension = "\\.JPG") {
-  
+  print("t")
   # Removing the additional junk from the names
+  message(str_glue("starting {image_name} with {pattern_remove} as the pattern to remove. Name pattern {name_pattern} and {extension}"))
   if (!is.na(pattern_remove)) {
     image_name <- str_remove(image_name, pattern_remove)  
   }
