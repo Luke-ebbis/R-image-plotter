@@ -10,7 +10,7 @@ pixi global install pictur -c conda-forge -c sibbe -c r
 
 The `pictuR` programme plots an pdf with images and allows for the optional creation of a description from a `tsv` file. If you want a description, put a `tsv` file in the zip that has a name and a description colunm. Example of the zip:
 ```
-figures.zip/
+figures/
 ├── description.tsv
 ├── P1070164 (Klein).JPG
 ├── P1070165 (Klein).JPG
